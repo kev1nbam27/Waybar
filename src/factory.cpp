@@ -18,7 +18,7 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
     auto id = hash_pos != std::string::npos ? name.substr(hash_pos + 1) : "";
 #if defined(__FreeBSD__) || (defined(__linux__) && !defined(NO_FILESYSTEM))
     if (ref == "battery") {
-      return new waybar::modules::Battery(id, config_[name]);
+      return new waybar::modules::Battery(id, bar_, config_[name]);
     }
 #endif
 #ifdef HAVE_GAMEMODE
@@ -199,6 +199,11 @@ waybar::AModule* waybar::Factory::makeModule(const std::string& name,
 #ifdef HAVE_LIBCAVA
     if (ref == "cava") {
       return new waybar::modules::Cava(id, config_[name]);
+    }
+#endif
+#ifdef HAVE_SYSTEMD_MONITOR
+    if (ref == "systemd-failed-units") {
+      return new waybar::modules::SystemdFailedUnits(id, config_[name]);
     }
 #endif
     if (ref == "temperature") {
