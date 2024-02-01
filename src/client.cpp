@@ -262,15 +262,30 @@ int waybar::Client::main(int argc, char *argv[]) {
   if (!portal) {
     portal = std::make_unique<waybar::Portal>();
   }
-  auto css_file = getStyle(style_opt);
-  setupCss(css_file);
+  m_cssFile = getStyle(style_opt);
+  setupCss(m_cssFile);
+  m_cssReloadHelper = std::make_unique<CssReloadHelper>(m_cssFile, [&]() { setupCss(m_cssFile); });
   portal->signal_appearance_changed().connect([&](waybar::Appearance appearance) {
     auto css_file = getStyle(style_opt, appearance);
     setupCss(css_file);
   });
+
+  auto m_config = config.getConfig();
+  if (m_config.isObject() && m_config["reload_style_on_change"].asBool()) {
+    m_cssReloadHelper->monitorChanges();
+  } else if (m_config.isArray()) {
+    for (const auto &conf : m_config) {
+      if (conf["reload_style_on_change"].asBool()) {
+        m_cssReloadHelper->monitorChanges();
+        break;
+      }
+    }
+  }
+
   bindInterfaces();
   gtk_app->hold();
   gtk_app->run();
+  m_cssReloadHelper.reset();  // stop watching css file
   bars.clear();
   return 0;
 }
